@@ -4,46 +4,38 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import com.antoan.financemanager.ui.theme.AppTheme
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.getValue
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.antoan.financemanager.domain.model.Theme
+import com.antoan.financemanager.ui.theme.FinanceManagerTheme
+import com.antoan.financemanager.ui.viewmodel.ThemeViewModel
+import dagger.hilt.android.AndroidEntryPoint
+import com.antoan.financemanager.ui.navigation.AppNavigation
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            AppTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+            val vm: ThemeViewModel = hiltViewModel()
+            val theme by vm.theme.collectAsStateWithLifecycle()
+
+            val useDarkTheme = when (theme) {
+                Theme.DARK -> true
+                Theme.LIGHT -> false
+                Theme.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            FinanceManagerTheme(darkTheme = useDarkTheme, dynamicColor = false) {
+                AppNavigation(
+                    onToggleTheme = { vm.toggleDarkLight() },
+                    onSetTheme = { vm.setTheme(it) },
+                    theme = theme
+                )
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier,
-        color = MaterialTheme.colorScheme.secondary
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    AppTheme {
-        Greeting("Android")
     }
 }
